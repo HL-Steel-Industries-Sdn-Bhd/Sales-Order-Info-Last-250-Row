@@ -34,23 +34,23 @@
     background: #fff;
   }
 
-  /* ===== 表格：fixed + 明确宽度，内容再长也截断 ===== */
+  /* ===== 表格：fixed + 明确宽度 ===== */
   table {
     table-layout: fixed;
-    width: 462px;                 /* = 52+36+24+120+52+120+28+30 */
+    width: 344px;                 /* 竖屏总和: 48+32+32+60+48+60+32+32 */
     border-collapse: collapse;
     font-size: 10px;
     line-height: 1.2;
   }
-  /* 竖屏列宽 */
-  table col:nth-child(1) { width: 52px; }   /* Creation      YY-MM-DD */
-  table col:nth-child(2) { width: 36px; }   /* SO No.       8005A */
-  table col:nth-child(3) { width: 24px; }   /* Item         104A */
-  table col:nth-child(4) { width: 120px; }  /* Customer Name ← 可拖 */
-  table col:nth-child(5) { width: 52px; }   /* Delivery Date YY-MM-DD */
-  table col:nth-child(6) { width: 120px; }  /* Item Name     ← 可拖 */
-  table col:nth-child(7) { width: 28px; }   /* Qty */
-  table col:nth-child(8) { width: 30px; }   /* Unit */
+  /* 竖屏列宽（按图片） */
+  table col:nth-child(1) { width: 48px; }   /* Creation */
+  table col:nth-child(2) { width: 32px; }   /* SO No. */
+  table col:nth-child(3) { width: 32px; }   /* Item */
+  table col:nth-child(4) { width: 60px; }   /* Customer Name ← 可拖 */
+  table col:nth-child(5) { width: 48px; }   /* Delivery Date */
+  table col:nth-child(6) { width: 60px; }   /* Item Name ← 可拖 */
+  table col:nth-child(7) { width: 32px; }   /* Qty */
+  table col:nth-child(8) { width: 32px; }   /* Unit */
 
   th, td {
     padding: 4px 3px;
@@ -90,7 +90,7 @@
 
   /* ===== 可拖拽列 ===== */
   th.resizable {
-    position: relative;   /* ✅ 关键：让 .resizer 相对 th 定位 */
+    position: relative;
     cursor: col-resize;
     background: #1d4b6e;
     transition: background 0.15s;
@@ -106,7 +106,7 @@
     bottom: 0;
     width: 18px;
     cursor: col-resize;
-    touch-action: none;         /* 手机上阻止浏览器横向滚动抢手势 */
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
     z-index: 3;
@@ -151,37 +151,34 @@
     margin: 6px 0;
   }
 
-  /* ===== 手机横屏 ===== */
-  @media (orientation: landscape) and (max-width: 1024px) {
-    table { font-size: 12px; width: 519px; }  /* = 60+50+24+120+60+120+40+45 */
-    th { font-size: 11px; padding: 5px 4px; }
-    td { padding: 5px 4px; }
+  /* ===== 横屏 / 桌面（按图片） ===== */
+  @media (orientation: landscape) and (max-width: 1024px), (min-width: 1025px) {
+    table { width: 548px; } /* 总和: 60+32+32+150+60+150+32+32 */
     table col:nth-child(1) { width: 60px; }
-    table col:nth-child(2) { width: 50px; }
-    table col:nth-child(3) { width: 24px; }
-    table col:nth-child(4) { width: 120px; }
+    table col:nth-child(2) { width: 32px; }
+    table col:nth-child(3) { width: 32px; }
+    table col:nth-child(4) { width: 150px; }
     table col:nth-child(5) { width: 60px; }
-    table col:nth-child(6) { width: 120px; }
-    table col:nth-child(7) { width: 40px; }
-    table col:nth-child(8) { width: 45px; }
+    table col:nth-child(6) { width: 150px; }
+    table col:nth-child(7) { width: 32px; }
+    table col:nth-child(8) { width: 32px; }
   }
 
-  /* ===== 桌面 ===== */
+  /* 横屏字体调整（桌面保留基础字体） */
+  @media (orientation: landscape) and (max-width: 1024px) {
+    table { font-size: 12px; }
+    th { font-size: 11px; padding: 5px 4px; }
+    td { padding: 5px 4px; }
+  }
+
+  /* 桌面字体调整 */
   @media (min-width: 1025px) {
     body { padding: 1.5rem; }
     .card { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1.6rem; }
     h1 { font-size: 1.4rem; margin-bottom: 1rem; }
-    table { font-size: 13px; width: 644px; }  /* = 90+70+24+120+90+120+60+70 */
+    table { font-size: 13px; }
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
-    table col:nth-child(1) { width: 90px; }
-    table col:nth-child(2) { width: 70px; }
-    table col:nth-child(3) { width: 24px; }
-    table col:nth-child(4) { width: 120px; }
-    table col:nth-child(5) { width: 90px; }
-    table col:nth-child(6) { width: 120px; }
-    table col:nth-child(7) { width: 60px; }
-    table col:nth-child(8) { width: 70px; }
   }
 </style>
 </head>
@@ -311,6 +308,14 @@
     if (!table) return;
     const cols = table.querySelectorAll('colgroup col');
 
+    // ✅ 动态判断当前允许的最小宽度
+    // 竖屏（宽<高且宽<1024）最小 60；横屏/桌面最小 150
+    const getMinWidth = () => {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const isDesktop = window.innerWidth >= 1025;
+      return (isLandscape || isDesktop) ? 150 : 60;
+    };
+
     container.querySelectorAll('th.resizable').forEach(th => {
       const colIndex = parseInt(th.dataset.col, 10);
       const col = cols[colIndex];
@@ -347,11 +352,16 @@
       const onMove = e => {
         if (!dragging) return;
         if (e.cancelable) e.preventDefault();
+        
         const delta = getX(e) - startX;
-        const newWidth = Math.max(20, startWidth + delta);
+        const minAllowed = getMinWidth();
+        // ✅ 限制列宽不能小于规定的最小值
+        const newWidth = Math.max(minAllowed, startWidth + delta);
+        const actualDelta = newWidth - startWidth;
+
         col.style.width = newWidth + 'px';
-        // ✅ 同步更新 table 宽度，保持其他列不变
-        table.style.width = Math.max(20, startTableWidth + delta) + 'px';
+        // 同步更新 table 宽度
+        table.style.width = Math.max(100, startTableWidth + actualDelta) + 'px';
       };
 
       const onEnd = () => {
@@ -370,14 +380,18 @@
       handle.addEventListener('touchstart', onStart, { passive: false });
     });
 
-    // 旋转屏幕 / 窗口变化 → 清除 inline 宽度，重置为 CSS 定义的宽度
+    // ✅ 修复：移除 resize 的重置，只在真正旋转屏幕时重置
     const resetWidths = () => {
       if (!table) return;
       table.style.width = '';
       cols.forEach(c => { c.style.width = ''; });
     };
-    window.addEventListener('orientationchange', () => setTimeout(resetWidths, 150));
-    window.addEventListener('resize', resetWidths);
+    
+    // 手机滚动时隐藏/显示地址栏会触发 resize，导致重置。
+    // 因此仅在 orientationchange 时重置。
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resetWidths, 150);
+    });
   }
 
   // ===== 拉取数据 =====
