@@ -41,15 +41,15 @@
     line-height: 1.2;
   }
 
-  /* ===== 竖屏默认列宽（总 ~344px，360/412 都能装下）===== */
-  table col:nth-child(1) { width: 52px; }  /* Creation    YY-MM-DD */
-  table col:nth-child(2) { width: 36px; }  /* SO No.      8005A */
-  table col:nth-child(3) { width: 42px; }  /* Item */
-  table col:nth-child(4) { width: 52px; }  /* Customer Name  ← 可拖 */
-  table col:nth-child(5) { width: 52px; }  /* Delivery Date YY-MM-DD */
-  table col:nth-child(6) { width: 52px; }  /* Item Name     ← 可拖 */
-  table col:nth-child(7) { width: 28px; }  /* Qty */
-  table col:nth-child(8) { width: 30px; }  /* Unit */
+  /* ===== 竖屏默认列宽（总 460px，360/412 视口会横向滚动）===== */
+  table col:nth-child(1) { width: 52px; }   /* Creation      YY-MM-DD */
+  table col:nth-child(2) { width: 36px; }   /* SO No.       8005A */
+  table col:nth-child(3) { width: 22px; }   /* Item         104A */
+  table col:nth-child(4) { width: 120px; }  /* Customer Name ← 可拖 */
+  table col:nth-child(5) { width: 52px; }   /* Delivery Date YY-MM-DD */
+  table col:nth-child(6) { width: 120px; }  /* Item Name     ← 可拖 */
+  table col:nth-child(7) { width: 28px; }   /* Qty */
+  table col:nth-child(8) { width: 30px; }   /* Unit */
 
   th, td {
     padding: 4px 3px;
@@ -89,6 +89,7 @@
 
   /* ===== 可拖拽列 ===== */
   th.resizable {
+    position: relative;   /* ✅ 关键修复：让 .resizer 相对 th 定位 */
     cursor: col-resize;
     background: #1d4b6e;
     transition: background 0.15s;
@@ -97,13 +98,13 @@
     background: #2a5d85;
   }
 
-  /* 手柄：完全放在 th 内部（right:0），不会被 overflow:hidden 裁掉 */
+  /* 手柄：完全放在 th 内部（right:0），宽度 18px */
   .resizer {
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
-    width: 14px;
+    width: 18px;
     cursor: col-resize;
     touch-action: none;      /* 手机上阻止浏览器横向滚动抢手势 */
     user-select: none;
@@ -115,18 +116,18 @@
   .resizer::after {
     content: '';
     position: absolute;
-    right: 3px;
-    top: 15%;
-    bottom: 15%;
+    right: 4px;
+    top: 12%;
+    bottom: 12%;
     width: 3px;
-    background: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.7);
     border-radius: 2px;
     transition: background 0.15s, width 0.15s, box-shadow 0.15s;
   }
   th.resizable:hover .resizer::after {
     background: #4fc3f7;
     width: 4px;
-    box-shadow: 0 0 4px rgba(79, 195, 247, 0.9);
+    box-shadow: 0 0 5px rgba(79, 195, 247, 0.9);
   }
   .resizer.active::after {
     background: #4fc3f7;
@@ -151,18 +152,18 @@
     margin: 6px 0;
   }
 
-  /* ===== 手机横屏：字体放大，列宽加大 ===== */
+  /* ===== 手机横屏：字体放大，Item 略放（26px） ===== */
   @media (orientation: landscape) and (max-width: 1024px) {
     table { font-size: 12px; }
     th { font-size: 11px; padding: 5px 4px; }
     td { padding: 5px 4px; }
-    table col:nth-child(1) { width: 70px; }
-    table col:nth-child(2) { width: 55px; }
-    table col:nth-child(3) { width: 90px; }
-    table col:nth-child(4) { width: 110px; }
-    table col:nth-child(5) { width: 70px; }
-    table col:nth-child(6) { width: 110px; }
-    table col:nth-child(7) { width: 42px; }
+    table col:nth-child(1) { width: 60px; }
+    table col:nth-child(2) { width: 50px; }
+    table col:nth-child(3) { width: 26px; }
+    table col:nth-child(4) { width: 120px; }
+    table col:nth-child(5) { width: 60px; }
+    table col:nth-child(6) { width: 120px; }
+    table col:nth-child(7) { width: 40px; }
     table col:nth-child(8) { width: 45px; }
   }
 
@@ -176,10 +177,10 @@
     td { padding: 9px 8px; }
     table col:nth-child(1) { width: 90px; }
     table col:nth-child(2) { width: 70px; }
-    table col:nth-child(3) { width: 130px; }
-    table col:nth-child(4) { width: 180px; }
+    table col:nth-child(3) { width: 30px; }
+    table col:nth-child(4) { width: 120px; }
     table col:nth-child(5) { width: 90px; }
-    table col:nth-child(6) { width: 180px; }
+    table col:nth-child(6) { width: 120px; }
     table col:nth-child(7) { width: 60px; }
     table col:nth-child(8) { width: 70px; }
   }
@@ -204,25 +205,19 @@
 
   const container = document.getElementById('tableContainer');
 
-  // ===== 日期 → YY-MM-DD（横竖屏一致）=====
+  // ===== 日期 → YY-MM-DD =====
   function toYMD(val) {
     if (val === null || val === undefined || val === '') return '';
     const s = String(val).trim();
 
-    // 4 位年份 → 取后两位
     const m4 = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
     if (m4) {
-      const yy = m4[1].slice(-2);
-      return `${yy}-${m4[2].padStart(2,'0')}-${m4[3].padStart(2,'0')}`;
+      return `${m4[1].slice(-2)}-${m4[2].padStart(2,'0')}-${m4[3].padStart(2,'0')}`;
     }
-
-    // 已是 2 位年份
     const m2 = s.match(/^(\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);
     if (m2) {
       return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
     }
-
-    // 兜底
     const d = new Date(s);
     if (!isNaN(d.getTime())) {
       const yy = String(d.getFullYear()).slice(-2);
@@ -234,23 +229,17 @@
   }
 
   // ===== SO 号 → 末尾 4 位数字 + 保留字母后缀 =====
-  // "SO-008005"  → "8005"
-  // "SO-008005A" → "8005A"
-  // "SO-8005A"   → "8005A"
   function shortenSO(so) {
     if (so === null || so === undefined) return '';
     const s = String(so).trim();
     if (!s) return '';
-
-    // 前缀（懒匹配）+ 数字串（至少1位）+ 可选字母
     const m = s.match(/^(.+?)(\d+)([A-Za-z]*)$/);
     if (m) {
       const digits  = m[2];
       const letters = m[3];
       const last4   = digits.length <= 4 ? digits : digits.slice(-4);
-      return last4 + letters;   // 字母原样保留
+      return last4 + letters;
     }
-    // 兜底
     return s.slice(-4);
   }
 
@@ -264,7 +253,6 @@
       .replace(/'/g, '&#039;');
   }
 
-  // ===== 渲染表格 =====
   function renderTable(rows) {
     if (!Array.isArray(rows) || rows.length === 0) {
       container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
@@ -326,7 +314,7 @@
     makeResizable();
   }
 
-  // ===== 列宽拖拽 =====
+  // ===== 列宽拖拽（算法保持你上一版，不动）=====
   function makeResizable() {
     const table = container.querySelector('table');
     if (!table) return;
@@ -355,7 +343,6 @@
         document.body.style.cursor = 'col-resize';
 
         startX = getX(e);
-        // ✅ 用 th 的实际渲染宽度（不是 col，col 不渲染盒子，getBoundingClientRect 返回 0）
         startWidth = th.getBoundingClientRect().width;
 
         document.addEventListener('mousemove', onMove, { passive: false });
@@ -367,9 +354,9 @@
 
       const onMove = e => {
         if (!dragging) return;
-        if (e.cancelable) e.preventDefault();   // 阻止手机横屏时的页面横向滚动
+        if (e.cancelable) e.preventDefault();
         const delta = getX(e) - startX;
-        const newWidth = Math.max(28, startWidth + delta);
+        const newWidth = Math.max(20, startWidth + delta);
         col.style.width = newWidth + 'px';
       };
 
