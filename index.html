@@ -255,9 +255,13 @@
   const sortOrderBtn = document.getElementById('sortOrderBtn');
 
   // 状态变量
-  let rawRows = [];       // 保留最初的数据
+  let rawRows = [];       
   let currentSort = 'original'; 
   let sortAsc = true;
+
+  // ✅ 用于记住拖拽后的宽度
+  let savedColWidths = {};   // 例如 { "3": "80px", "5": "140px" }
+  let savedTableWidth = '';  // 例如 "380px"
 
   // ===== 日期处理 =====
   function parseDate(val) {
@@ -363,14 +367,23 @@
     html += `</tbody></table>`;
     container.innerHTML = html;
 
+    // ✅ 关键：渲染后检查是否有保存的自定义宽度，如果有则应用
+    const table = container.querySelector('table');
+    const cols = table.querySelectorAll('colgroup col');
+    
+    if (savedTableWidth) {
+      table.style.width = savedTableWidth;
+    }
+    Object.keys(savedColWidths).forEach(idx => {
+      if (cols[idx]) cols[idx].style.width = savedColWidths[idx];
+    });
+
     makeResizable();
   }
 
   // ===== 排序逻辑 =====
   function applySort() {
     if (rawRows.length === 0) return;
-    
-    // 复制一份数据做排序
     let sorted = [...rawRows];
 
     if (currentSort === 'deliveryDate') {
@@ -382,18 +395,16 @@
         let timeB = parseDate(eddB);
         
         let cmp = 0;
-        // 1. 先按 Delivery Date 排
         if (timeA === null && timeB === null) {
-          cmp = 0; // 都没日期，进入 Creation Date 比较
+          cmp = 0;
         } else if (timeA === null) {
-          cmp = -1; // A 空，A 置顶
+          cmp = -1;
         } else if (timeB === null) {
-          cmp = 1;  // B 空，B 置顶
+          cmp = 1;
         } else {
           cmp = timeA - timeB;
         }
         
-        // 2. 如果都没日期（或者日期相同），按 Creation Date
         if (cmp === 0) {
           let tsTimeA = parseDate(tsA);
           let tsTimeB = parseDate(tsB);
@@ -401,11 +412,9 @@
             cmp = tsTimeA - tsTimeB;
           }
         }
-        
         return sortAsc ? cmp : -cmp;
       });
     } else {
-      // 初始排序，如果不升序则反转整个原始数组
       if (!sortAsc) {
         sorted.reverse();
       }
@@ -479,9 +488,14 @@
         const minAllowed = getMinWidth();
         const newWidth = Math.max(minAllowed, startWidth + delta);
         const actualDelta = newWidth - startWidth;
+        const newTableWidth = Math.max(100, startTableWidth + actualDelta);
 
         col.style.width = newWidth + 'px';
-        table.style.width = Math.max(100, startTableWidth + actualDelta) + 'px';
+        table.style.width = newTableWidth + 'px';
+
+        // ✅ 实时保存当前宽度
+        savedColWidths[colIndex] = newWidth + 'px';
+        savedTableWidth = newTableWidth + 'px';
       };
 
       const onEnd = () => {
@@ -500,14 +514,17 @@
       handle.addEventListener('touchstart', onStart, { passive: false });
     });
 
-    const resetWidths = () => {
-      if (!table) return;
-      table.style.width = '';
-      cols.forEach(c => { c.style.width = ''; });
-    };
-    
+    // ✅ 只有在手机旋转时，才清除保存的宽度，让 CSS 默认布局接管
     window.addEventListener('orientationchange', () => {
-      setTimeout(resetWidths, 150);
+      setTimeout(() => {
+        savedColWidths = {};
+        savedTableWidth = '';
+        const t = container.querySelector('table');
+        if (t) {
+          t.style.width = '';
+          t.querySelectorAll('colgroup col').forEach(c => { c.style.width = ''; });
+        }
+      }, 150);
     });
   }
 
@@ -522,11 +539,11 @@
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const payload = await resp.json();
       if (!payload || payload.status !== 'ok') {
-        throw new Error((payload && payload.message) || '返回格式异常'); 
+        throw new Error((payload && payload.message) || '返回格式异常');
       }
       
       rawRows = payload.data || [];
-      applySort();  // 初次渲染使用 applySort，以便享受默认的初始排序
+      applySort();  
       
     } catch (err) {
       console.error(err);
