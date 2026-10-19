@@ -11,6 +11,7 @@
     background: #f6f9fc;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     -webkit-text-size-adjust: 100%;
+    overflow: hidden; /* 锁定 body 不滚动，让 table-wrapper 内部滚动 */
   }
   .card {
     background: #fff;
@@ -18,37 +19,77 @@
     padding: 8px 6px;
     margin: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 8px); /* 填满视口，让内部滚动生效 */
+  }
+
+  /* ===== 顶部控制栏 ===== */
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 4px 8px;
+    flex-shrink: 0;
   }
   h1 {
     font-size: 0.95rem;
     font-weight: 600;
     color: #0b2b4a;
-    margin: 2px 4px 8px;
+    margin: 0;
+  }
+  .sort-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  select, .sort-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+  }
+  .sort-btn {
+    background: #1d4b6e;
+    color: #fff;
+    border: none;
+    font-weight: 500;
+    min-width: 60px;
+  }
+  .sort-btn:active {
+    background: #0e3a57;
   }
 
+  /* ===== 表格容器 (包含滚动) ===== */
   .table-wrapper {
-    overflow-x: auto;
+    flex: 1;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;
     border: 1px solid #e2eaf2;
     background: #fff;
+    position: relative;
   }
 
   /* ===== 表格：fixed + 明确宽度 ===== */
   table {
     table-layout: fixed;
-    width: 344px;                 /* 竖屏总和: 48+32+32+60+48+60+32+32 */
+    width: 344px;                 /* 竖屏总和 */
     border-collapse: collapse;
     font-size: 10px;
     line-height: 1.2;
   }
-  /* 竖屏列宽（按图片） */
+  /* 竖屏列宽 */
   table col:nth-child(1) { width: 48px; }   /* Creation */
   table col:nth-child(2) { width: 32px; }   /* SO No. */
   table col:nth-child(3) { width: 32px; }   /* Item */
-  table col:nth-child(4) { width: 60px; }   /* Customer Name ← 可拖 */
+  table col:nth-child(4) { width: 60px; }   /* Customer Name */
   table col:nth-child(5) { width: 48px; }   /* Delivery Date */
-  table col:nth-child(6) { width: 60px; }   /* Item Name ← 可拖 */
+  table col:nth-child(6) { width: 60px; }   /* Item Name */
   table col:nth-child(7) { width: 32px; }   /* Qty */
   table col:nth-child(8) { width: 32px; }   /* Unit */
 
@@ -60,6 +101,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  
+  /* 表头固定 */
   th {
     background: #1d4b6e;
     color: #fff;
@@ -69,8 +112,9 @@
     letter-spacing: 0.2px;
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 5;
     border-right: 1px solid #2f638b;
+    border-bottom: 2px solid #163a56;
     line-height: 1.1;
     white-space: normal;
     word-break: break-word;
@@ -90,7 +134,7 @@
 
   /* ===== 可拖拽列 ===== */
   th.resizable {
-    position: relative;
+    position: sticky; /* 跟随表头 */
     cursor: col-resize;
     background: #1d4b6e;
     transition: background 0.15s;
@@ -109,7 +153,7 @@
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    z-index: 3;
+    z-index: 6;
     background: transparent;
   }
   .resizer::after {
@@ -153,29 +197,29 @@
 
   /* ===== 横屏 / 桌面（按图片） ===== */
   @media (orientation: landscape) and (max-width: 1024px), (min-width: 1025px) {
-    table { width: 548px; } /* 总和: 60+32+32+150+60+150+32+32 */
+    table { width: 580px; } /* 60+48+32+150+60+150+32+48 */
     table col:nth-child(1) { width: 60px; }
-    table col:nth-child(2) { width: 32px; }
+    table col:nth-child(2) { width: 48px; }
     table col:nth-child(3) { width: 32px; }
     table col:nth-child(4) { width: 150px; }
     table col:nth-child(5) { width: 60px; }
     table col:nth-child(6) { width: 150px; }
     table col:nth-child(7) { width: 32px; }
-    table col:nth-child(8) { width: 32px; }
+    table col:nth-child(8) { width: 48px; }
   }
 
-  /* 横屏字体调整（桌面保留基础字体） */
+  /* 横屏字体调整 */
   @media (orientation: landscape) and (max-width: 1024px) {
     table { font-size: 12px; }
     th { font-size: 11px; padding: 5px 4px; }
     td { padding: 5px 4px; }
   }
 
-  /* 桌面字体调整 */
+  /* 桌面调整 */
   @media (min-width: 1025px) {
     body { padding: 1.5rem; }
-    .card { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1.6rem; }
-    h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+    .card { max-width: 1400px; margin: 0 auto; height: calc(100vh - 3rem); padding: 1.2rem 1.6rem; }
+    h1 { font-size: 1.4rem; }
     table { font-size: 13px; }
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
@@ -184,8 +228,18 @@
 </head>
 <body>
 <div class="card">
-  <h1>📦 销售订单 · 最新 250 行</h1>
-  <div id="tableContainer">
+  <div class="header-bar">
+    <h1>📦 销售订单</h1>
+    <div class="sort-controls">
+      <select id="sortSelect">
+        <option value="original">初始排序</option>
+        <option value="deliveryDate">按 Delivery Date</option>
+      </select>
+      <button class="sort-btn" id="sortOrderBtn">升序 ↑</button>
+    </div>
+  </div>
+  
+  <div id="tableContainer" class="table-wrapper">
     <div class="loading">⏳ 正在读取数据…</div>
   </div>
 </div>
@@ -197,29 +251,39 @@
 
   const COLUMN_INDEX_ORDER = [0, 2, 5, 3, 11, 6, 9, 10];
   const container = document.getElementById('tableContainer');
+  const sortSelect = document.getElementById('sortSelect');
+  const sortOrderBtn = document.getElementById('sortOrderBtn');
 
-  // ===== 日期 → YY-MM-DD =====
-  function toYMD(val) {
-    if (val === null || val === undefined || val === '') return '';
+  // 状态变量
+  let rawRows = [];       // 保留最初的数据
+  let currentSort = 'original'; 
+  let sortAsc = true;
+
+  // ===== 日期处理 =====
+  function parseDate(val) {
+    if (val === null || val === undefined || val === '') return null;
     const s = String(val).trim();
-
     const m4 = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    if (m4) return `${m4[1].slice(-2)}-${m4[2].padStart(2,'0')}-${m4[3].padStart(2,'0')}`;
-
+    if (m4) return new Date(m4[1], m4[2]-1, m4[3]).getTime();
+    
     const m2 = s.match(/^(\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    if (m2) return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
-
+    if (m2) return new Date('20'+m2[1], m2[2]-1, m2[3]).getTime();
+    
     const d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      const yy = String(d.getFullYear()).slice(-2);
-      const mo = String(d.getMonth() + 1).padStart(2, '0');
-      const da = String(d.getDate()).padStart(2, '0');
-      return `${yy}-${mo}-${da}`;
-    }
-    return s;
+    return isNaN(d.getTime()) ? null : d.getTime();
   }
 
-  // ===== SO 号 → 末尾 4 位数字 + 保留字母后缀 =====
+  function formatYMD(val) {
+    const time = parseDate(val);
+    if (!time) return '';
+    const d = new Date(time);
+    const yy = String(d.getFullYear()).slice(-2);
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${yy}-${mo}-${da}`;
+  }
+
+  // ===== SO 号处理 =====
   function shortenSO(so) {
     if (so === null || so === undefined) return '';
     const s = String(so).trim();
@@ -241,39 +305,39 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
-  function renderTable(rows) {
-    if (!Array.isArray(rows) || rows.length === 0) {
+  // ===== 渲染表格 =====
+  function renderTable(dataToRender) {
+    if (!Array.isArray(dataToRender) || dataToRender.length === 0) {
       container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
       return;
     }
 
     let html = `
-      <div class="table-wrapper">
-        <table>
-          <colgroup>
-            <col><col><col><col><col><col><col><col>
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Creation</th>
-              <th>SO<br>No.</th>
-              <th>Item</th>
-              <th class="resizable" data-col="3">
-                Customer<br>Name
-                <div class="resizer" aria-label="拖动调整 Customer Name 列宽"></div>
-              </th>
-              <th>Delivery<br>Date</th>
-              <th class="resizable" data-col="5">
-                Item<br>Name
-                <div class="resizer" aria-label="拖动调整 Item Name 列宽"></div>
-              </th>
-              <th>Qty</th>
-              <th>Unit</th>
-            </tr>
-          </thead>
-          <tbody>`;
+      <table>
+        <colgroup>
+          <col><col><col><col><col><col><col><col>
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Creation</th>
+            <th>SO<br>No.</th>
+            <th>Item</th>
+            <th class="resizable" data-col="3">
+              Customer<br>Name
+              <div class="resizer" aria-label="拖动调整 Customer Name 列宽"></div>
+            </th>
+            <th>Delivery<br>Date</th>
+            <th class="resizable" data-col="5">
+              Item<br>Name
+              <div class="resizer" aria-label="拖动调整 Item Name 列宽"></div>
+            </th>
+            <th>Qty</th>
+            <th>Unit</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-    rows.forEach(row => {
+    dataToRender.forEach(row => {
       if (!Array.isArray(row)) return;
       const ts       = row[COLUMN_INDEX_ORDER[0]];
       const so       = row[COLUMN_INDEX_ORDER[1]];
@@ -285,22 +349,82 @@
       const unit     = row[COLUMN_INDEX_ORDER[7]];
 
       html += `<tr>
-        <td class="date-cell">${escapeHtml(toYMD(ts))}</td>
+        <td class="date-cell">${escapeHtml(formatYMD(ts))}</td>
         <td>${escapeHtml(shortenSO(so))}</td>
         <td>${escapeHtml(item)}</td>
         <td>${escapeHtml(cust)}</td>
-        <td class="date-cell">${escapeHtml(toYMD(edd))}</td>
+        <td class="date-cell">${escapeHtml(formatYMD(edd))}</td>
         <td>${escapeHtml(itemName)}</td>
         <td>${escapeHtml(qty)}</td>
         <td>${escapeHtml(unit)}</td>
       </tr>`;
     });
 
-    html += `</tbody></table></div>`;
+    html += `</tbody></table>`;
     container.innerHTML = html;
 
     makeResizable();
   }
+
+  // ===== 排序逻辑 =====
+  function applySort() {
+    if (rawRows.length === 0) return;
+    
+    // 复制一份数据做排序
+    let sorted = [...rawRows];
+
+    if (currentSort === 'deliveryDate') {
+      sorted.sort((a, b) => {
+        let eddA = a[11], eddB = b[11];
+        let tsA = a[0], tsB = b[0];
+        
+        let timeA = parseDate(eddA);
+        let timeB = parseDate(eddB);
+        
+        let cmp = 0;
+        // 1. 先按 Delivery Date 排
+        if (timeA === null && timeB === null) {
+          cmp = 0; // 都没日期，进入 Creation Date 比较
+        } else if (timeA === null) {
+          cmp = -1; // A 空，A 置顶
+        } else if (timeB === null) {
+          cmp = 1;  // B 空，B 置顶
+        } else {
+          cmp = timeA - timeB;
+        }
+        
+        // 2. 如果都没日期（或者日期相同），按 Creation Date
+        if (cmp === 0) {
+          let tsTimeA = parseDate(tsA);
+          let tsTimeB = parseDate(tsB);
+          if (tsTimeA !== null && tsTimeB !== null) {
+            cmp = tsTimeA - tsTimeB;
+          }
+        }
+        
+        return sortAsc ? cmp : -cmp;
+      });
+    } else {
+      // 初始排序，如果不升序则反转整个原始数组
+      if (!sortAsc) {
+        sorted.reverse();
+      }
+    }
+    
+    renderTable(sorted);
+  }
+
+  // 监听 UI 变化
+  sortSelect.addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    applySort();
+  });
+
+  sortOrderBtn.addEventListener('click', () => {
+    sortAsc = !sortAsc;
+    sortOrderBtn.textContent = sortAsc ? '升序 ↑' : '降序 ↓';
+    applySort();
+  });
 
   // ===== 列宽拖拽 =====
   function makeResizable() {
@@ -308,8 +432,6 @@
     if (!table) return;
     const cols = table.querySelectorAll('colgroup col');
 
-    // ✅ 动态判断当前允许的最小宽度
-    // 竖屏（宽<高且宽<1024）最小 60；横屏/桌面最小 150
     const getMinWidth = () => {
       const isLandscape = window.innerWidth > window.innerHeight;
       const isDesktop = window.innerWidth >= 1025;
@@ -355,12 +477,10 @@
         
         const delta = getX(e) - startX;
         const minAllowed = getMinWidth();
-        // ✅ 限制列宽不能小于规定的最小值
         const newWidth = Math.max(minAllowed, startWidth + delta);
         const actualDelta = newWidth - startWidth;
 
         col.style.width = newWidth + 'px';
-        // 同步更新 table 宽度
         table.style.width = Math.max(100, startTableWidth + actualDelta) + 'px';
       };
 
@@ -380,15 +500,12 @@
       handle.addEventListener('touchstart', onStart, { passive: false });
     });
 
-    // ✅ 修复：移除 resize 的重置，只在真正旋转屏幕时重置
     const resetWidths = () => {
       if (!table) return;
       table.style.width = '';
       cols.forEach(c => { c.style.width = ''; });
     };
     
-    // 手机滚动时隐藏/显示地址栏会触发 resize，导致重置。
-    // 因此仅在 orientationchange 时重置。
     window.addEventListener('orientationchange', () => {
       setTimeout(resetWidths, 150);
     });
@@ -405,9 +522,12 @@
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const payload = await resp.json();
       if (!payload || payload.status !== 'ok') {
-        throw new Error((payload && payload.message) || '返回格式异常');
+        throw new Error((payload && payload.message) || '返回格式异常'); 
       }
-      renderTable(payload.data || []);
+      
+      rawRows = payload.data || [];
+      applySort();  // 初次渲染使用 applySort，以便享受默认的初始排序
+      
     } catch (err) {
       console.error(err);
       container.innerHTML = '<div class="error">❌ 加载失败: ' + escapeHtml(err.message) + '</div>';
