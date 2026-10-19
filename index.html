@@ -33,18 +33,19 @@
     border: 1px solid #e2eaf2;
     background: #fff;
   }
+
+  /* ===== 表格：fixed + 明确宽度，内容再长也截断 ===== */
   table {
     table-layout: fixed;
-    width: auto;
+    width: 462px;                 /* = 52+36+24+120+52+120+28+30 */
     border-collapse: collapse;
     font-size: 10px;
     line-height: 1.2;
   }
-
-  /* ===== 竖屏默认列宽（总 460px，360/412 视口会横向滚动）===== */
+  /* 竖屏列宽 */
   table col:nth-child(1) { width: 52px; }   /* Creation      YY-MM-DD */
   table col:nth-child(2) { width: 36px; }   /* SO No.       8005A */
-  table col:nth-child(3) { width: 22px; }   /* Item         104A */
+  table col:nth-child(3) { width: 24px; }   /* Item         104A */
   table col:nth-child(4) { width: 120px; }  /* Customer Name ← 可拖 */
   table col:nth-child(5) { width: 52px; }   /* Delivery Date YY-MM-DD */
   table col:nth-child(6) { width: 120px; }  /* Item Name     ← 可拖 */
@@ -89,7 +90,7 @@
 
   /* ===== 可拖拽列 ===== */
   th.resizable {
-    position: relative;   /* ✅ 关键修复：让 .resizer 相对 th 定位 */
+    position: relative;   /* ✅ 关键：让 .resizer 相对 th 定位 */
     cursor: col-resize;
     background: #1d4b6e;
     transition: background 0.15s;
@@ -98,7 +99,6 @@
     background: #2a5d85;
   }
 
-  /* 手柄：完全放在 th 内部（right:0），宽度 18px */
   .resizer {
     position: absolute;
     right: 0;
@@ -106,13 +106,12 @@
     bottom: 0;
     width: 18px;
     cursor: col-resize;
-    touch-action: none;      /* 手机上阻止浏览器横向滚动抢手势 */
+    touch-action: none;         /* 手机上阻止浏览器横向滚动抢手势 */
     user-select: none;
     -webkit-user-select: none;
     z-index: 3;
     background: transparent;
   }
-  /* 视觉指示：一条白色竖线 */
   .resizer::after {
     content: '';
     position: absolute;
@@ -152,14 +151,14 @@
     margin: 6px 0;
   }
 
-  /* ===== 手机横屏：字体放大，Item 略放（26px） ===== */
+  /* ===== 手机横屏 ===== */
   @media (orientation: landscape) and (max-width: 1024px) {
-    table { font-size: 12px; }
+    table { font-size: 12px; width: 519px; }  /* = 60+50+24+120+60+120+40+45 */
     th { font-size: 11px; padding: 5px 4px; }
     td { padding: 5px 4px; }
     table col:nth-child(1) { width: 60px; }
     table col:nth-child(2) { width: 50px; }
-    table col:nth-child(3) { width: 26px; }
+    table col:nth-child(3) { width: 24px; }
     table col:nth-child(4) { width: 120px; }
     table col:nth-child(5) { width: 60px; }
     table col:nth-child(6) { width: 120px; }
@@ -172,12 +171,12 @@
     body { padding: 1.5rem; }
     .card { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1.6rem; }
     h1 { font-size: 1.4rem; margin-bottom: 1rem; }
-    table { font-size: 13px; }
+    table { font-size: 13px; width: 644px; }  /* = 90+70+24+120+90+120+60+70 */
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
     table col:nth-child(1) { width: 90px; }
     table col:nth-child(2) { width: 70px; }
-    table col:nth-child(3) { width: 30px; }
+    table col:nth-child(3) { width: 24px; }
     table col:nth-child(4) { width: 120px; }
     table col:nth-child(5) { width: 90px; }
     table col:nth-child(6) { width: 120px; }
@@ -199,10 +198,7 @@
   // ⚠️ 替换成你部署的 GAS Web App URL（/exec 结尾）
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzCS2JdjgmntxCL84gA723ORFm2-RvHX3elo5GbCk3JvIfbsUmXHWGYVl5zkSdEIT72/exec";
 
-  // 原始列索引：0=Timestamp, 2=Sales Order No., 5=Item No., 3=Customer Name,
-  //             11=Estimated Delivery Date, 6=Item Name (Main), 9=Quantity, 10=Unit
   const COLUMN_INDEX_ORDER = [0, 2, 5, 3, 11, 6, 9, 10];
-
   const container = document.getElementById('tableContainer');
 
   // ===== 日期 → YY-MM-DD =====
@@ -211,13 +207,11 @@
     const s = String(val).trim();
 
     const m4 = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    if (m4) {
-      return `${m4[1].slice(-2)}-${m4[2].padStart(2,'0')}-${m4[3].padStart(2,'0')}`;
-    }
+    if (m4) return `${m4[1].slice(-2)}-${m4[2].padStart(2,'0')}-${m4[3].padStart(2,'0')}`;
+
     const m2 = s.match(/^(\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    if (m2) {
-      return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
-    }
+    if (m2) return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
+
     const d = new Date(s);
     if (!isNaN(d.getTime())) {
       const yy = String(d.getFullYear()).slice(-2);
@@ -246,11 +240,8 @@
   function escapeHtml(s) {
     if (s === null || s === undefined) return '';
     return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
   function renderTable(rows) {
@@ -314,7 +305,7 @@
     makeResizable();
   }
 
-  // ===== 列宽拖拽（算法保持你上一版，不动）=====
+  // ===== 列宽拖拽 =====
   function makeResizable() {
     const table = container.querySelector('table');
     if (!table) return;
@@ -326,7 +317,7 @@
       const handle = th.querySelector('.resizer');
       if (!col || !handle) return;
 
-      let startX = 0, startWidth = 0, dragging = false;
+      let startX = 0, startWidth = 0, startTableWidth = 0, dragging = false;
 
       const getX = e => {
         if (e.touches && e.touches.length) return e.touches[0].clientX;
@@ -344,6 +335,7 @@
 
         startX = getX(e);
         startWidth = th.getBoundingClientRect().width;
+        startTableWidth = table.getBoundingClientRect().width;
 
         document.addEventListener('mousemove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
@@ -358,6 +350,8 @@
         const delta = getX(e) - startX;
         const newWidth = Math.max(20, startWidth + delta);
         col.style.width = newWidth + 'px';
+        // ✅ 同步更新 table 宽度，保持其他列不变
+        table.style.width = Math.max(20, startTableWidth + delta) + 'px';
       };
 
       const onEnd = () => {
@@ -375,6 +369,15 @@
       handle.addEventListener('mousedown', onStart);
       handle.addEventListener('touchstart', onStart, { passive: false });
     });
+
+    // 旋转屏幕 / 窗口变化 → 清除 inline 宽度，重置为 CSS 定义的宽度
+    const resetWidths = () => {
+      if (!table) return;
+      table.style.width = '';
+      cols.forEach(c => { c.style.width = ''; });
+    };
+    window.addEventListener('orientationchange', () => setTimeout(resetWidths, 150));
+    window.addEventListener('resize', resetWidths);
   }
 
   // ===== 拉取数据 =====
