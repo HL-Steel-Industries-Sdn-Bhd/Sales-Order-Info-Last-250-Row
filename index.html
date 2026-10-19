@@ -5,35 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>销售订单 · 最后250行</title>
 <style>
-  * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
-  body { background: #f6f9fc; margin: 0; padding: 2rem 1.5rem; display: flex; justify-content: center; }
-  .card { max-width: 1400px; width: 100%; background: #fff; border-radius: 24px;
-          box-shadow: 0 12px 30px rgba(0,0,0,.06); padding: 1.8rem 2rem 2rem; }
-  h1 { font-size: 1.8rem; margin: 0 0 .3rem; color: #0b2b4a; }
-  .subtitle { color: #4a627a; margin-bottom: 1.5rem; font-size: .95rem;
-              border-left: 4px solid #2c7da0; padding: .75rem 1rem;
-              background: #f0f7fb; border-radius: 0 12px 12px 0;
-              display: flex; justify-content: space-between; align-items: center;
-              flex-wrap: wrap; gap: .8rem; }
-  .refresh-btn { background: #1d4b6e; color: #fff; border: none; border-radius: 30px;
-                 padding: .5rem 1.2rem; font-size: .85rem; cursor: pointer; }
-  .refresh-btn:hover { background: #0e3a57; }
-  .refresh-btn:disabled { opacity: .6; cursor: not-allowed; }
-  .table-wrapper { overflow-x: auto; border-radius: 18px; border: 1px solid #e2eaf2; }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 1100px; white-space: nowrap; }
-  th { background: #1d4b6e; color: #fff; font-weight: 500; padding: 14px 12px;
-       text-align: left; font-size: .85rem; text-transform: uppercase; }
-  td { padding: 12px; border-bottom: 1px solid #e6eef7; color: #1e2f3e; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #f5faff; }
-  .loading { padding: 3rem 2rem; text-align: center; color: #4b6f8a;
-             background: #fafdff; border-radius: 20px; border: 1px dashed #b7cfdf; }
-  .error { padding: 1.5rem 2rem; background: #fff1f0; border: 1px solid #f0b3b0;
-           border-radius: 16px; color: #a12b26; font-weight: 500; margin-top: 1rem; }
-  .footer-note { margin-top: 1.5rem; color: #6482a0; font-size: .8rem;
-                 border-top: 1px solid #d9e6f2; padding-top: 1rem;
-                 display: flex; justify-content: space-between; }
-  #hidden-frame { display: none; width: 0; height: 0; border: 0; }
+  * { box-sizing: border-box; font-family: system-ui,'Segoe UI',Roboto,sans-serif; }
+  body { background:#f6f9fc; margin:0; padding:2rem 1.5rem; display:flex; justify-content:center; }
+  .card { max-width:1400px; width:100%; background:#fff; border-radius:24px;
+          box-shadow:0 12px 30px rgba(0,0,0,.06); padding:1.8rem 2rem 2rem; }
+  h1 { font-size:1.8rem; margin:0 0 .3rem; color:#0b2b4a; }
+  .subtitle { color:#4a627a; margin-bottom:1.5rem; font-size:.95rem;
+              border-left:4px solid #2c7da0; padding:.75rem 1rem;
+              background:#f0f7fb; border-radius:0 12px 12px 0;
+              display:flex; justify-content:space-between; align-items:center;
+              flex-wrap:wrap; gap:.8rem; }
+  .refresh-btn { background:#1d4b6e; color:#fff; border:none; border-radius:30px;
+                 padding:.5rem 1.2rem; font-size:.85rem; cursor:pointer; }
+  .refresh-btn:hover { background:#0e3a57; }
+  .refresh-btn:disabled { opacity:.6; cursor:not-allowed; }
+  .table-wrapper { overflow-x:auto; border-radius:18px; border:1px solid #e2eaf2; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; min-width:1100px; white-space:nowrap; }
+  th { background:#1d4b6e; color:#fff; font-weight:500; padding:14px 12px;
+       text-align:left; font-size:.85rem; text-transform:uppercase; }
+  td { padding:12px; border-bottom:1px solid #e6eef7; color:#1e2f3e; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#f5faff; }
+  .loading { padding:3rem 2rem; text-align:center; color:#4b6f8a;
+             background:#fafdff; border-radius:20px; border:1px dashed #b7cfdf; }
+  .error { padding:1.5rem 2rem; background:#fff1f0; border:1px solid #f0b3b0;
+           border-radius:16px; color:#a12b26; font-weight:500; margin-top:1rem; }
+  .footer-note { margin-top:1.5rem; color:#6482a0; font-size:.8rem;
+                 border-top:1px solid #d9e6f2; padding-top:1rem;
+                 display:flex; justify-content:space-between; }
 </style>
 </head>
 <body>
@@ -41,7 +40,7 @@
   <h1>📦 销售订单 · 最新 250 行</h1>
   <div class="subtitle">
     <div>📌 数据源 GS ID:
-      <span style="font-family: monospace; background:#e3eef8; padding:.2rem .6rem; border-radius:12px;">
+      <span style="font-family:monospace; background:#e3eef8; padding:.2rem .6rem; border-radius:12px;">
         1QJxMVXoIPLIXOOJSzCMquJXu4q1vgRgCyNRKwsxf5TY
       </span>
     </div>
@@ -59,17 +58,13 @@
   </div>
 </div>
 
-<!-- 隐藏 iframe，接收 GAS 返回内容 -->
-<iframe id="hidden-frame" name="hidden-frame" src="about:blank"></iframe>
-
 <script>
 (function () {
-  // ⚠️⚠️⚠️ 替换成你自己部署的 GAS Web App URL ⚠️⚠️⚠️
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzagSkYc1Mq4eLBS0IM6mT3FAyIVPS1nReTK1skQwozVkEoizI-kHUQn1Q2h2rDVz-b/exec";
+  // ⚠️ 替换成你部署的 GAS Web App URL（/exec 结尾）
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzCS2JdjgmntxCL84gA723ORFm2-RvHX3elo5GbCk3JvIfbsUmXHWGYVl5zkSdEIT72/exec";
 
-  // 目标列（原始列索引，从 0 开始）
-  // 0=Timestamp, 2=Sales Order No., 5=Item No., 3=Customer Name,
-  // 11=Estimated Delivery Date, 6=Item Name (Main), 9=Quantity, 10=Unit of Measurement
+  // 原始列索引：0=Timestamp, 2=Sales Order No., 5=Item No., 3=Customer Name,
+  //             11=Estimated Delivery Date, 6=Item Name (Main), 9=Quantity, 10=Unit of Measurement
   const COLUMN_INDEX_ORDER = [0, 2, 5, 3, 11, 6, 9, 10];
   const COLUMN_NAMES = [
     "Timestamp", "Sales Order No.", "Item No.", "Customer Name",
@@ -81,27 +76,47 @@
   const refreshBtn = document.getElementById('refreshBtn');
 
   let isLoading = false;
-  let timeoutHandle = null;
 
-  // ==== GAS 回调入口（GAS 里的 respond() 会调用 window.parent.receiveGASData）====
-  window.receiveGASData = function (payload) {
-    clearTimeout(timeoutHandle);
-    isLoading = false;
-    refreshBtn.disabled = false;
+  window.loadData = async function () {
+    if (isLoading) return;
+    isLoading = true;
+    refreshBtn.disabled = true;
+    errorContainer.style.display = 'none';
+    container.innerHTML = '<div class="loading">⏳ 正在读取最后 250 行数据…</div>';
 
-    if (!payload || payload.status === 'error') {
-      showError('❌ 加载失败: ' + (payload && payload.message ? payload.message : '未知错误'));
+    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.indexOf('你的部署ID') !== -1) {
+      isLoading = false;
+      refreshBtn.disabled = false;
+      showError('⚠️ 请先在 HTML 中把 GAS_WEB_APP_URL 替换成你部署的 Web App URL');
       return;
     }
-    if (!Array.isArray(payload.data)) {
-      showError('❌ 返回数据格式异常');
-      return;
+
+    try {
+      // ✅ 直接 fetch GET，跟你范例一样
+      const resp = await fetch(GAS_WEB_APP_URL + '?t=' + Date.now());
+      if (!resp.ok) {
+        throw new Error('HTTP ' + resp.status + ' ' + resp.statusText);
+      }
+      const payload = await resp.json();
+
+      if (!payload || payload.status !== 'ok') {
+        throw new Error(payload && payload.message ? payload.message : '返回格式异常');
+      }
+      if (!Array.isArray(payload.data)) {
+        throw new Error('返回 data 不是数组');
+      }
+      renderTable(payload.data);
+
+    } catch (err) {
+      console.error('加载失败:', err);
+      showError('❌ 加载失败: ' + err.message);
+    } finally {
+      isLoading = false;
+      refreshBtn.disabled = false;
     }
-    renderTable(payload.data);
   };
 
   function renderTable(rows) {
-    errorContainer.style.display = 'none';
     if (rows.length === 0) {
       container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
       return;
@@ -134,52 +149,10 @@
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
   }
 
-  // ==== 通过 form + hidden iframe 提交（绕过 CORS）====
-  window.loadData = function () {
-    if (isLoading) return;
-    isLoading = true;
-    refreshBtn.disabled = true;
-
-    errorContainer.style.display = 'none';
-    container.innerHTML = '<div class="loading">⏳ 正在读取最后 250 行数据…</div>';
-
-    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.indexOf('你的部署ID') !== -1) {
-      isLoading = false;
-      refreshBtn.disabled = false;
-      showError('⚠️ 请先在 HTML 中把 GAS_WEB_APP_URL 替换成你部署的 Web App URL');
-      return;
-    }
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = GAS_WEB_APP_URL;
-    form.target = 'hidden-frame';
-    form.style.display = 'none';
-
-    const t = document.createElement('input');
-    t.type = 'hidden'; t.name = 't'; t.value = Date.now();
-    form.appendChild(t);
-
-    document.body.appendChild(form);
-    form.submit();
-    setTimeout(() => form.remove(), 1000);
-
-    // 15 秒超时提醒
-    clearTimeout(timeoutHandle);
-    timeoutHandle = setTimeout(() => {
-      if (isLoading) {
-        isLoading = false;
-        refreshBtn.disabled = false;
-        showError('⏱️ 请求超时，请检查 GAS 部署是否设为「任何人」访问，或网络问题。');
-      }
-    }, 15000);
-  };
-
-  // 页面加载后自动拉取
   window.addEventListener('load', window.loadData);
 })();
 </script>
