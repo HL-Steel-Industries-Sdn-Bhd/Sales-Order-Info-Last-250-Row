@@ -58,20 +58,11 @@
     justify-content: center;
     cursor: pointer;
     font-size: 16px;
-    transition: all 0.2s;
     user-select: none;
   }
   .refresh-btn:hover {
     background: #f0f4f8;
     border-color: #1d4b6e;
-  }
-  .refresh-btn.loading {
-    animation: spin 1s linear infinite;
-    pointer-events: none;
-    opacity: 0.6;
-  }
-  @keyframes spin {
-    100% { transform: rotate(360deg); }
   }
 
   .sort-controls {
@@ -258,7 +249,6 @@
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
     
-    /* 根据图片调整桌面列宽 */
     table col:nth-child(1) { width: 80px; }
     table col:nth-child(2) { width: 48px; }
     table col:nth-child(3) { width: 48px; }
@@ -460,10 +450,8 @@
     applySort();
   });
 
-  // ✅ 刷新按钮事件
+  // ✅ 纯净版刷新按钮，无任何多余效果
   refreshBtn.addEventListener('click', () => {
-    if (refreshBtn.classList.contains('loading')) return;
-    refreshBtn.classList.add('loading');
     loadData();
   });
 
@@ -560,11 +548,9 @@
   async function loadData() {
     if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.indexOf('你的部署ID') !== -1) {
       container.innerHTML = '<div class="error">⚠️ 请先在 HTML 中把 GAS_WEB_APP_URL 替换成你部署的 Web App URL</div>';
-      refreshBtn.classList.remove('loading');
       return;
     }
     try {
-      // ✅ 增加随机参数和时间戳，双重保险防止缓存
       const resp = await fetch(GAS_WEB_APP_URL + '?t=' + Date.now() + '&nocache=' + Math.random(), { cache: 'no-store' });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const payload = await resp.json();
@@ -578,9 +564,6 @@
     } catch (err) {
       console.error(err);
       container.innerHTML = '<div class="error">❌ 加载失败: ' + escapeHtml(err.message) + '</div>';
-    } finally {
-      // 无论成功失败，移除 loading 状态
-      refreshBtn.classList.remove('loading');
     }
   }
 
