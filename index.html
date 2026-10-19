@@ -5,56 +5,171 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>销售订单 · 最后250行</title>
 <style>
-  * { box-sizing: border-box; font-family: system-ui,'Segoe UI',Roboto,sans-serif; }
-  body { background:#f6f9fc; margin:0; padding:2rem 1.5rem; display:flex; justify-content:center; }
-  .card { max-width:1400px; width:100%; background:#fff; border-radius:24px;
-          box-shadow:0 12px 30px rgba(0,0,0,.06); padding:1.8rem 2rem 2rem; }
-  h1 { font-size:1.8rem; margin:0 0 .3rem; color:#0b2b4a; }
-  .subtitle { color:#4a627a; margin-bottom:1.5rem; font-size:.95rem;
-              border-left:4px solid #2c7da0; padding:.75rem 1rem;
-              background:#f0f7fb; border-radius:0 12px 12px 0;
-              display:flex; justify-content:space-between; align-items:center;
-              flex-wrap:wrap; gap:.8rem; }
-  .refresh-btn { background:#1d4b6e; color:#fff; border:none; border-radius:30px;
-                 padding:.5rem 1.2rem; font-size:.85rem; cursor:pointer; }
-  .refresh-btn:hover { background:#0e3a57; }
-  .refresh-btn:disabled { opacity:.6; cursor:not-allowed; }
-  .table-wrapper { overflow-x:auto; border-radius:18px; border:1px solid #e2eaf2; }
-  table { width:100%; border-collapse:collapse; font-size:.9rem; min-width:1100px; white-space:nowrap; }
-  th { background:#1d4b6e; color:#fff; font-weight:500; padding:14px 12px;
-       text-align:left; font-size:.85rem; text-transform:uppercase; }
-  td { padding:12px; border-bottom:1px solid #e6eef7; color:#1e2f3e; }
-  tr:last-child td { border-bottom:none; }
-  tr:hover td { background:#f5faff; }
-  .loading { padding:3rem 2rem; text-align:center; color:#4b6f8a;
-             background:#fafdff; border-radius:20px; border:1px dashed #b7cfdf; }
-  .error { padding:1.5rem 2rem; background:#fff1f0; border:1px solid #f0b3b0;
-           border-radius:16px; color:#a12b26; font-weight:500; margin-top:1rem; }
-  .footer-note { margin-top:1.5rem; color:#6482a0; font-size:.8rem;
-                 border-top:1px solid #d9e6f2; padding-top:1rem;
-                 display:flex; justify-content:space-between; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #f6f9fc;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 6px;
+    margin: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  h1 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0b2b4a;
+    margin: 2px 4px 8px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    border: 1px solid #e2eaf2;
+    background: #fff;
+  }
+  table {
+    table-layout: fixed;
+    width: auto;
+    border-collapse: collapse;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  /* ===== 竖屏默认列宽（总 362px，360/412 视口都能装下）===== */
+  table col:nth-child(1) { width: 62px; }  /* Creation     YYYY-MM-DD */
+  table col:nth-child(2) { width: 36px; }  /* SO No.      8005A */
+  table col:nth-child(3) { width: 42px; }  /* Item */
+  table col:nth-child(4) { width: 52px; }  /* Customer Name  ← 可调 */
+  table col:nth-child(5) { width: 62px; }  /* Delivery Date YYYY-MM-DD */
+  table col:nth-child(6) { width: 52px; }  /* Item Name     ← 可调 */
+  table col:nth-child(7) { width: 28px; }  /* Qty */
+  table col:nth-child(8) { width: 30px; }  /* Unit */
+
+  th, td {
+    padding: 4px 3px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  th {
+    background: #1d4b6e;
+    color: #fff;
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-right: 1px solid #2f638b;
+    line-height: 1.1;
+    white-space: normal;
+    word-break: break-word;
+  }
+  th:last-child { border-right: none; }
+  td {
+    border-bottom: 1px solid #eaf1f8;
+    color: #1e2f3e;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f5faff; }
+
+  /* 日期列用 tabular-nums 保证等宽，避免挤压 */
+  td.date-cell {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* ===== 可拖拽列 ===== */
+  .resizable { position: relative; }
+  .resizer {
+    position: absolute;
+    right: -6px;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+    z-index: 3;
+  }
+  .resizer::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    bottom: 30%;
+    width: 2px;
+    background: rgba(255,255,255,0.5);
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+  .resizable:hover .resizer::after { background: rgba(255,255,255,0.9); }
+
+  /* ===== 状态 ===== */
+  .loading {
+    padding: 24px 12px;
+    text-align: center;
+    color: #4b6f8a;
+    font-size: 13px;
+  }
+  .error {
+    padding: 12px;
+    background: #fff1f0;
+    border: 1px solid #f0b3b0;
+    border-radius: 8px;
+    color: #a12b26;
+    font-size: 12px;
+    margin: 6px 0;
+  }
+
+  /* ===== 横屏（手机）：字体放大 + 列宽加大 ===== */
+  @media (orientation: landscape) and (max-width: 1024px) {
+    table { font-size: 13px; }
+    th { font-size: 12px; padding: 6px 5px; }
+    td { padding: 6px 5px; }
+    table col:nth-child(1) { width: 110px; }
+    table col:nth-child(2) { width: 65px; }
+    table col:nth-child(3) { width: 100px; }
+    table col:nth-child(4) { width: 120px; }
+    table col:nth-child(5) { width: 110px; }
+    table col:nth-child(6) { width: 120px; }
+    table col:nth-child(7) { width: 50px; }
+    table col:nth-child(8) { width: 55px; }
+  }
+
+  /* ===== 桌面 ===== */
+  @media (min-width: 1025px) {
+    body { padding: 1.5rem; }
+    .card { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1.6rem; }
+    h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+    table { font-size: 14px; }
+    th { font-size: 13px; padding: 10px 8px; }
+    td { padding: 10px 8px; }
+    table col:nth-child(1) { width: 160px; }
+    table col:nth-child(2) { width: 90px; }
+    table col:nth-child(3) { width: 140px; }
+    table col:nth-child(4) { width: 200px; }
+    table col:nth-child(5) { width: 150px; }
+    table col:nth-child(6) { width: 200px; }
+    table col:nth-child(7) { width: 70px; }
+    table col:nth-child(8) { width: 80px; }
+  }
 </style>
 </head>
 <body>
 <div class="card">
   <h1>📦 销售订单 · 最新 250 行</h1>
-  <div class="subtitle">
-    <div>📌 数据源 GS ID:
-      <span style="font-family:monospace; background:#e3eef8; padding:.2rem .6rem; border-radius:12px;">
-        1QJxMVXoIPLIXOOJSzCMquJXu4q1vgRgCyNRKwsxf5TY
-      </span>
-    </div>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻ 重新加载</button>
-  </div>
-
   <div id="tableContainer">
-    <div class="loading" id="loadingIndicator">⏳ 正在读取最后 250 行数据…</div>
-  </div>
-  <div id="errorContainer" style="display:none;"></div>
-
-  <div class="footer-note">
-    <span>只显示最后 250 行 · 按指定 8 列排序</span>
-    <span>⏱️ 通过 GAS 获取</span>
+    <div class="loading">⏳ 正在读取数据…</div>
   </div>
 </div>
 
@@ -64,96 +179,186 @@
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzCS2JdjgmntxCL84gA723ORFm2-RvHX3elo5GbCk3JvIfbsUmXHWGYVl5zkSdEIT72/exec";
 
   // 原始列索引：0=Timestamp, 2=Sales Order No., 5=Item No., 3=Customer Name,
-  //             11=Estimated Delivery Date, 6=Item Name (Main), 9=Quantity, 10=Unit of Measurement
+  //             11=Estimated Delivery Date, 6=Item Name (Main), 9=Quantity, 10=Unit
   const COLUMN_INDEX_ORDER = [0, 2, 5, 3, 11, 6, 9, 10];
-  const COLUMN_NAMES = [
-    "Timestamp", "Sales Order No.", "Item No.", "Customer Name",
-    "Estimated Delivery Date", "Item Name (Main)", "Quantity", "Unit of Measurement"
-  ];
 
   const container = document.getElementById('tableContainer');
-  const errorContainer = document.getElementById('errorContainer');
-  const refreshBtn = document.getElementById('refreshBtn');
 
-  let isLoading = false;
+  // ===== 日期 → 统一 YYYY-MM-DD =====
+  function toYMD(val) {
+    if (val === null || val === undefined || val === '') return '';
+    const s = String(val).trim();
 
-  window.loadData = async function () {
-    if (isLoading) return;
-    isLoading = true;
-    refreshBtn.disabled = true;
-    errorContainer.style.display = 'none';
-    container.innerHTML = '<div class="loading">⏳ 正在读取最后 250 行数据…</div>';
-
-    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.indexOf('你的部署ID') !== -1) {
-      isLoading = false;
-      refreshBtn.disabled = false;
-      showError('⚠️ 请先在 HTML 中把 GAS_WEB_APP_URL 替换成你部署的 Web App URL');
-      return;
+    // 已经是 YYYY-MM-DD 或 YYYY/MM/DD
+    const m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) {
+      return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
     }
 
-    try {
-      // ✅ 直接 fetch GET，跟你范例一样
-      const resp = await fetch(GAS_WEB_APP_URL + '?t=' + Date.now());
-      if (!resp.ok) {
-        throw new Error('HTTP ' + resp.status + ' ' + resp.statusText);
-      }
-      const payload = await resp.json();
-
-      if (!payload || payload.status !== 'ok') {
-        throw new Error(payload && payload.message ? payload.message : '返回格式异常');
-      }
-      if (!Array.isArray(payload.data)) {
-        throw new Error('返回 data 不是数组');
-      }
-      renderTable(payload.data);
-
-    } catch (err) {
-      console.error('加载失败:', err);
-      showError('❌ 加载失败: ' + err.message);
-    } finally {
-      isLoading = false;
-      refreshBtn.disabled = false;
+    // 其它格式（含时间/带时区），用 Date 解析
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const y  = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${da}`;
     }
-  };
-
-  function renderTable(rows) {
-    if (rows.length === 0) {
-      container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
-      return;
-    }
-    let html = '<div class="table-wrapper"><table><thead><tr>';
-    COLUMN_NAMES.forEach(n => { html += '<th>' + escapeHtml(n) + '</th>'; });
-    html += '</tr></thead><tbody>';
-
-    rows.forEach(row => {
-      if (!Array.isArray(row)) return;
-      html += '<tr>';
-      COLUMN_INDEX_ORDER.forEach(idx => {
-        let v = row[idx];
-        if (v === null || v === undefined) v = '';
-        html += '<td>' + escapeHtml(String(v)) + '</td>';
-      });
-      html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-    html += '<div style="margin-top:12px;font-size:.85rem;color:#3d6a8c;text-align:right;padding-right:4px;">'
-          + '📊 共显示 ' + rows.length + ' 行</div>';
-    container.innerHTML = html;
+    return s; // 实在解析不了就原样返回
   }
 
-  function showError(msg) {
-    container.innerHTML = '<div class="loading">暂无数据</div>';
-    errorContainer.style.display = 'block';
-    errorContainer.className = 'error';
-    errorContainer.textContent = msg;
+  // ===== SO 号 → 最后4位数字 + 字母后缀 =====
+  // "SO-008005"  → "8005"
+  // "SO-008005A" → "8005A"
+  // "SO-8005A"   → "8005A"
+  function shortenSO(so) {
+    if (so === null || so === undefined) return '';
+    const s = String(so).trim();
+    if (!s) return '';
+
+    // 匹配：前缀 + 数字串(至少1位) + 可选字母后缀
+    const m = s.match(/^(.+?)(\d+)([A-Za-z]*)$/);
+    if (m) {
+      const digits  = m[2];
+      const letters = m[3];             // 字母原样保留
+      const last4   = digits.length <= 4 ? digits : digits.slice(-4);
+      return last4 + letters;
+    }
+
+    // 兜底：取最后4个字符
+    return s.slice(-4);
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
-  window.addEventListener('load', window.loadData);
+  // ===== 渲染表格 =====
+  function renderTable(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
+      return;
+    }
+
+    let html = `
+      <div class="table-wrapper">
+        <table>
+          <colgroup>
+            <col><col><col><col><col><col><col><col>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Creation</th>
+              <th>SO<br>No.</th>
+              <th>Item</th>
+              <th class="resizable" data-col="3">Customer<br>Name<div class="resizer" data-col="3"></div></th>
+              <th>Delivery<br>Date</th>
+              <th class="resizable" data-col="5">Item<br>Name<div class="resizer" data-col="5"></div></th>
+              <th>Qty</th>
+              <th>Unit</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+    rows.forEach(row => {
+      if (!Array.isArray(row)) return;
+      const ts       = row[COLUMN_INDEX_ORDER[0]];
+      const so       = row[COLUMN_INDEX_ORDER[1]];
+      const item     = row[COLUMN_INDEX_ORDER[2]];
+      const cust     = row[COLUMN_INDEX_ORDER[3]];
+      const edd      = row[COLUMN_INDEX_ORDER[4]];
+      const itemName = row[COLUMN_INDEX_ORDER[5]];
+      const qty      = row[COLUMN_INDEX_ORDER[6]];
+      const unit     = row[COLUMN_INDEX_ORDER[7]];
+
+      html += `<tr>
+        <td class="date-cell">${escapeHtml(toYMD(ts))}</td>
+        <td>${escapeHtml(shortenSO(so))}</td>
+        <td>${escapeHtml(item)}</td>
+        <td>${escapeHtml(cust)}</td>
+        <td class="date-cell">${escapeHtml(toYMD(edd))}</td>
+        <td>${escapeHtml(itemName)}</td>
+        <td>${escapeHtml(qty)}</td>
+        <td>${escapeHtml(unit)}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+
+    makeResizable();
+  }
+
+  // ===== 列宽拖拽 =====
+  function makeResizable() {
+    const table = container.querySelector('table');
+    if (!table) return;
+    const cols = table.querySelectorAll('colgroup col');
+
+    container.querySelectorAll('th.resizable').forEach(th => {
+      const colIndex = parseInt(th.dataset.col, 10);
+      const col = cols[colIndex];
+      const handle = th.querySelector('.resizer');
+      if (!col || !handle) return;
+
+      let startX = 0, startWidth = 0, dragging = false;
+      const getX = e => (e.touches ? e.touches[0].clientX : e.clientX);
+
+      const onStart = e => {
+        e.preventDefault(); e.stopPropagation();
+        dragging = true;
+        startX = getX(e);
+        startWidth = col.getBoundingClientRect().width || th.offsetWidth;
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+      };
+      const onMove = e => {
+        if (!dragging) return;
+        const newWidth = Math.max(28, startWidth + (getX(e) - startX));
+        col.style.width = newWidth + 'px';
+        if (e.cancelable) e.preventDefault();
+      };
+      const onEnd = () => {
+        dragging = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+      };
+
+      handle.addEventListener('mousedown', onStart);
+      handle.addEventListener('touchstart', onStart, { passive: false });
+    });
+  }
+
+  // ===== 拉取数据 =====
+  async function loadData() {
+    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.indexOf('你的部署ID') !== -1) {
+      container.innerHTML = '<div class="error">⚠️ 请先在 HTML 中把 GAS_WEB_APP_URL 替换成你部署的 Web App URL</div>';
+      return;
+    }
+    try {
+      const resp = await fetch(GAS_WEB_APP_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const payload = await resp.json();
+      if (!payload || payload.status !== 'ok') {
+        throw new Error((payload && payload.message) || '返回格式异常');
+      }
+      renderTable(payload.data || []);
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<div class="error">❌ 加载失败: ' + escapeHtml(err.message) + '</div>';
+    }
+  }
+
+  window.addEventListener('load', loadData);
 })();
 </script>
 </body>
