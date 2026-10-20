@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Sales Order Info</title>
-<!-- 引入 Flatpickr 日历样式和库 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -15,7 +14,6 @@
     background: #f6f9fc;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     -webkit-text-size-adjust: 100%;
-    /* 移除全局 overflow: hidden，允许页面本身可以轻微拉动触发刷新 */
   }
   .card {
     background: #fff;
@@ -25,7 +23,7 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 8px); /* 保持卡片高度撑满 */
+    height: calc(100vh - 8px);
   }
 
   /* ===== 顶部控制栏 ===== */
@@ -41,6 +39,7 @@
   .title-group {
     display: flex;
     align-items: center;
+    gap: 4px;
   }
   
   h1 {
@@ -58,44 +57,46 @@
     align-items: center;
   }
 
-  /* 按钮通用样式 */
-  button {
-    font-family: inherit;
-  }
-  .icon-btn {
-    background: #fff;
-    border: 1px solid #ccc;
-    color: #1d4b6e;
-    border-radius: 6px;
-    padding: 4px 6px;
-    cursor: pointer;
+  /* 日历按钮样式 */
+  .calendar-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    position: relative;
-  }
-  .icon-btn:hover {
-    background: #f0f4f8;
-    border-color: #1d4b6e;
   }
   
-  /* 日历清除按钮的叉号 */
-  .clear-date {
+  .icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .icon-btn:hover { background: #eef2f6; }
+  
+  /* 已过滤的红色小圆点 */
+  .filter-dot {
     display: none;
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 6px;
     background: #e74c3c;
-    color: white;
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-    align-items: center;
-    justify-content: center;
+  }
+
+  /* 清除日期的小叉 */
+  .clear-date {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #e74c3c;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
-    z-index: 10;
+    padding: 0 4px;
   }
 
   select, .sort-btn {
@@ -115,11 +116,9 @@
     font-weight: 500;
     min-width: 60px;
   }
-  .sort-btn:active {
-    background: #0e3a57;
-  }
+  .sort-btn:active { background: #0e3a57; }
 
-  /* ===== 表格容器 (内部滚动，触发顶部刷新) ===== */
+  /* ===== 表格容器 ===== */
   .table-wrapper {
     flex: 1;
     overflow: auto;
@@ -128,8 +127,7 @@
     border: 1px solid #e2eaf2;
     background: #fff;
     position: relative;
-    /* 允许在最顶部往下拖动时，把滚动事件传递给 body 触发浏览器的下拉刷新 */
-    overscroll-behavior-y: auto; 
+    overscroll-behavior-y: auto; /* 允许触发顶部下拉刷新 */
   }
 
   /* ===== 表格默认 (竖屏) ===== */
@@ -158,9 +156,7 @@
     text-overflow: ellipsis;
   }
   
-  td:nth-child(3) {
-    text-align: center;
-  }
+  td:nth-child(3) { text-align: center; }
   
   th {
     background: #1d4b6e;
@@ -198,15 +194,11 @@
     background: #1d4b6e;
     transition: background 0.15s;
   }
-  th.resizable:hover {
-    background: #2a5d85;
-  }
+  th.resizable:hover { background: #2a5d85; }
 
   .resizer {
     position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    right: 0; top: 0; bottom: 0;
     width: 18px;
     cursor: col-resize;
     touch-action: none;
@@ -218,22 +210,18 @@
   .resizer::after {
     content: '';
     position: absolute;
-    right: 4px;
-    top: 12%;
-    bottom: 12%;
+    right: 4px; top: 12%; bottom: 12%;
     width: 3px;
     background: rgba(255, 255, 255, 0.7);
     border-radius: 2px;
     transition: background 0.15s, width 0.15s, box-shadow 0.15s;
   }
   th.resizable:hover .resizer::after {
-    background: #4fc3f7;
-    width: 4px;
+    background: #4fc3f7; width: 4px;
     box-shadow: 0 0 5px rgba(79, 195, 247, 0.9);
   }
   .resizer.active::after {
-    background: #4fc3f7;
-    width: 4px;
+    background: #4fc3f7; width: 4px;
     box-shadow: 0 0 6px rgba(79, 195, 247, 1);
   }
 
@@ -268,16 +256,14 @@
     table col:nth-child(8) { width: 48px; }
   }
 
-  /* ===== 桌面 (包含 iPad 横屏) ===== */
+  /* ===== 桌面 ===== */
   @media (min-width: 1025px) {
     body { padding: 1.5rem; }
     .card { max-width: 1400px; margin: 0 auto; height: calc(100vh - 3rem); padding: 1.2rem 1.6rem; }
     h1 { font-size: 1.4rem; }
-    
     table { font-size: 13px; width: 672px; }
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
-    
     table col:nth-child(1) { width: 80px; }
     table col:nth-child(2) { width: 58px; }
     table col:nth-child(3) { width: 48px; }
@@ -287,31 +273,26 @@
     table col:nth-child(7) { width: 48px; }
     table col:nth-child(8) { width: 58px; }
   }
-
-  /* 优化 Flatpickr 在手机上的大小 */
-  .flatpickr-calendar {
-    font-size: 14px;
-  }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="header-bar">
+    <!-- 左侧：标题 + 日历图标 + 清除小叉 -->
     <div class="title-group">
       <h1>Sales Order Info</h1>
-    </div>
-    <div class="actions-group">
-      <!-- 日历按钮 -->
-      <div style="position: relative;">
-        <button class="icon-btn" id="calendarBtn" title="按 Creation 日期筛选">
-          📅
-          <span class="clear-date" id="clearDateBtn" title="清除筛选">✕</span>
-        </button>
+      <div class="calendar-wrapper">
+        <button class="icon-btn" id="calendarBtn" title="按 Delivery Date 筛选">📅</button>
+        <span class="filter-dot" id="filterDot"></span>
+        <button class="clear-date" id="clearDateBtn" title="清除日期筛选">✕</button>
       </div>
-      <!-- 排序控制 -->
+    </div>
+    
+    <!-- 右侧：排序与升降 -->
+    <div class="actions-group">
       <select id="sortSelect">
-        <option value="original">初始排序</option>
-        <option value="deliveryDate">按 Delivery Date</option>
+        <option value="default">Default</option>
+        <option value="deliveryDate">Delivery Date</option>
       </select>
       <button class="sort-btn" id="sortOrderBtn">升序 ↑</button>
     </div>
@@ -332,22 +313,24 @@
   const sortOrderBtn = document.getElementById('sortOrderBtn');
   const calendarBtn = document.getElementById('calendarBtn');
   const clearDateBtn = document.getElementById('clearDateBtn');
+  const filterDot = document.getElementById('filterDot');
 
   let rawRows = [];       
-  let currentSort = 'original'; 
+  let currentSort = 'default'; 
   let sortAsc = true;
-  let filterDate = ''; // 日期筛选 (YYYY-MM-DD)
+  let filterDate = ''; 
 
   let savedColWidths = {};   
   let savedTableWidth = '';  
 
-  // 初始化 Flatpickr
+  // 初始化 Flatpickr (绑定在纯粹的日历图标上，界面美观)
   const fp = flatpickr(calendarBtn, {
     dateFormat: "Y-m-d",
     onChange: function(selectedDates, dateStr, instance) {
       filterDate = dateStr;
       if (filterDate) {
-        clearDateBtn.style.display = 'flex';
+        filterDot.style.display = 'block';
+        clearDateBtn.style.display = 'inline-block';
       }
       applySort();
     }
@@ -355,9 +338,10 @@
 
   // 清除日期筛选
   clearDateBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // 阻止触发日历
+    e.stopPropagation(); 
     fp.clear();
     filterDate = '';
+    filterDot.style.display = 'none';
     clearDateBtn.style.display = 'none';
     applySort();
   });
@@ -489,14 +473,14 @@
   function applySort() {
     if (rawRows.length === 0) return;
 
-    // 1. 先过滤
+    // 1. 筛选：按 Delivery Date (索引 11)
     let processed = rawRows.filter(row => {
       if (!filterDate) return true;
-      const ts = row[COLUMN_INDEX_ORDER[0]]; // Creation Date 在索引 0
-      return formatYMDLong(ts) === filterDate;
+      const edd = row[11]; 
+      return formatYMDLong(edd) === filterDate;
     });
 
-    // 2. 再排序
+    // 2. 排序
     if (currentSort === 'deliveryDate') {
       processed.sort((a, b) => {
         let timeA = parseDate(a[11]), timeB = parseDate(b[11]);
