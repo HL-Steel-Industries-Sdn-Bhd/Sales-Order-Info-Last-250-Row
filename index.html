@@ -2,8 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>销售订单 · 最后250行</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sales Order Info</title>
+<!-- 引入 Flatpickr 日历样式和库 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -11,7 +15,7 @@
     background: #f6f9fc;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     -webkit-text-size-adjust: 100%;
-    overflow: hidden;
+    /* 移除全局 overflow: hidden，允许页面本身可以轻微拉动触发刷新 */
   }
   .card {
     background: #fff;
@@ -21,7 +25,7 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 8px);
+    height: calc(100vh - 8px); /* 保持卡片高度撑满 */
   }
 
   /* ===== 顶部控制栏 ===== */
@@ -31,26 +35,69 @@
     align-items: center;
     padding: 4px 4px 8px;
     flex-shrink: 0;
+    gap: 8px;
   }
   
   .title-group {
     display: flex;
     align-items: center;
-    gap: 8px;
   }
   
   h1 {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: #0b2b4a;
     margin: 0;
+    white-space: nowrap;
+    letter-spacing: -0.5px;
   }
 
-  .sort-controls {
+  .actions-group {
     display: flex;
     gap: 6px;
     align-items: center;
   }
+
+  /* 按钮通用样式 */
+  button {
+    font-family: inherit;
+  }
+  .icon-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    color: #1d4b6e;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    position: relative;
+  }
+  .icon-btn:hover {
+    background: #f0f4f8;
+    border-color: #1d4b6e;
+  }
+  
+  /* 日历清除按钮的叉号 */
+  .clear-date {
+    display: none;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+
   select, .sort-btn {
     padding: 4px 8px;
     font-size: 12px;
@@ -72,7 +119,7 @@
     background: #0e3a57;
   }
 
-  /* ===== 表格容器 ===== */
+  /* ===== 表格容器 (内部滚动，触发顶部刷新) ===== */
   .table-wrapper {
     flex: 1;
     overflow: auto;
@@ -81,12 +128,14 @@
     border: 1px solid #e2eaf2;
     background: #fff;
     position: relative;
+    /* 允许在最顶部往下拖动时，把滚动事件传递给 body 触发浏览器的下拉刷新 */
+    overscroll-behavior-y: auto; 
   }
 
   /* ===== 表格默认 (竖屏) ===== */
   table {
     table-layout: fixed;
-    width: 344px;                 /* 48+32+32+60+48+60+32+32 */
+    width: 344px;
     border-collapse: collapse;
     font-size: 10px;
     line-height: 1.2;
@@ -109,12 +158,10 @@
     text-overflow: ellipsis;
   }
   
-  /* ✅ Item 列的内容居中 */
   td:nth-child(3) {
     text-align: center;
   }
   
-  /* 表头固定 */
   th {
     background: #1d4b6e;
     color: #fff;
@@ -208,7 +255,7 @@
 
   /* ===== 横屏 (手机) ===== */
   @media (orientation: landscape) and (max-width: 1024px) {
-    table { font-size: 12px; width: 580px; } /* 60+48+32+150+60+150+32+48 */
+    table { font-size: 12px; width: 580px; }
     th { font-size: 11px; padding: 5px 4px; }
     td { padding: 5px 4px; }
     table col:nth-child(1) { width: 60px; }
@@ -227,20 +274,23 @@
     .card { max-width: 1400px; margin: 0 auto; height: calc(100vh - 3rem); padding: 1.2rem 1.6rem; }
     h1 { font-size: 1.4rem; }
     
-    /* SO No. 和 Unit 各加宽 10px，总宽变为 672px */
-    table { font-size: 13px; width: 672px; } /* 80+58+48+150+80+150+48+58 */
-    
+    table { font-size: 13px; width: 672px; }
     th { font-size: 12px; padding: 9px 8px; }
     td { padding: 9px 8px; }
     
     table col:nth-child(1) { width: 80px; }
-    table col:nth-child(2) { width: 58px; } /* 加宽 10px */
+    table col:nth-child(2) { width: 58px; }
     table col:nth-child(3) { width: 48px; }
     table col:nth-child(4) { width: 150px; }
     table col:nth-child(5) { width: 80px; }
     table col:nth-child(6) { width: 150px; }
     table col:nth-child(7) { width: 48px; }
-    table col:nth-child(8) { width: 58px; } /* 加宽 10px */
+    table col:nth-child(8) { width: 58px; }
+  }
+
+  /* 优化 Flatpickr 在手机上的大小 */
+  .flatpickr-calendar {
+    font-size: 14px;
   }
 </style>
 </head>
@@ -248,9 +298,17 @@
 <div class="card">
   <div class="header-bar">
     <div class="title-group">
-      <h1>📦 销售订单</h1>
+      <h1>Sales Order Info</h1>
     </div>
-    <div class="sort-controls">
+    <div class="actions-group">
+      <!-- 日历按钮 -->
+      <div style="position: relative;">
+        <button class="icon-btn" id="calendarBtn" title="按 Creation 日期筛选">
+          📅
+          <span class="clear-date" id="clearDateBtn" title="清除筛选">✕</span>
+        </button>
+      </div>
+      <!-- 排序控制 -->
       <select id="sortSelect">
         <option value="original">初始排序</option>
         <option value="deliveryDate">按 Delivery Date</option>
@@ -272,13 +330,37 @@
   const container = document.getElementById('tableContainer');
   const sortSelect = document.getElementById('sortSelect');
   const sortOrderBtn = document.getElementById('sortOrderBtn');
+  const calendarBtn = document.getElementById('calendarBtn');
+  const clearDateBtn = document.getElementById('clearDateBtn');
 
   let rawRows = [];       
   let currentSort = 'original'; 
   let sortAsc = true;
+  let filterDate = ''; // 日期筛选 (YYYY-MM-DD)
 
   let savedColWidths = {};   
   let savedTableWidth = '';  
+
+  // 初始化 Flatpickr
+  const fp = flatpickr(calendarBtn, {
+    dateFormat: "Y-m-d",
+    onChange: function(selectedDates, dateStr, instance) {
+      filterDate = dateStr;
+      if (filterDate) {
+        clearDateBtn.style.display = 'flex';
+      }
+      applySort();
+    }
+  });
+
+  // 清除日期筛选
+  clearDateBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // 阻止触发日历
+    fp.clear();
+    filterDate = '';
+    clearDateBtn.style.display = 'none';
+    applySort();
+  });
 
   function parseDate(val) {
     if (val === null || val === undefined || val === '') return null;
@@ -301,6 +383,16 @@
     const mo = String(d.getMonth() + 1).padStart(2, '0');
     const da = String(d.getDate()).padStart(2, '0');
     return `${yy}-${mo}-${da}`;
+  }
+  
+  function formatYMDLong(val) {
+    const time = parseDate(val);
+    if (!time) return '';
+    const d = new Date(time);
+    const yyyy = String(d.getFullYear());
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mo}-${da}`;
   }
 
   function shortenSO(so) {
@@ -326,7 +418,7 @@
 
   function renderTable(dataToRender) {
     if (!Array.isArray(dataToRender) || dataToRender.length === 0) {
-      container.innerHTML = '<div class="loading">⚠️ 没有读到任何数据</div>';
+      container.innerHTML = '<div class="loading">⚠️ 没有符合条件的数据</div>';
       return;
     }
 
@@ -384,7 +476,6 @@
     const table = container.querySelector('table');
     const cols = table.querySelectorAll('colgroup col');
     
-    // 恢复拖拽后的宽度
     if (savedTableWidth) {
       table.style.width = savedTableWidth;
     }
@@ -397,10 +488,17 @@
 
   function applySort() {
     if (rawRows.length === 0) return;
-    let sorted = [...rawRows];
 
+    // 1. 先过滤
+    let processed = rawRows.filter(row => {
+      if (!filterDate) return true;
+      const ts = row[COLUMN_INDEX_ORDER[0]]; // Creation Date 在索引 0
+      return formatYMDLong(ts) === filterDate;
+    });
+
+    // 2. 再排序
     if (currentSort === 'deliveryDate') {
-      sorted.sort((a, b) => {
+      processed.sort((a, b) => {
         let timeA = parseDate(a[11]), timeB = parseDate(b[11]);
         let cmp = 0;
         if (timeA === null && timeB === null) cmp = 0;
@@ -415,10 +513,10 @@
         return sortAsc ? cmp : -cmp;
       });
     } else {
-      if (!sortAsc) sorted.reverse();
+      if (!sortAsc) processed.reverse();
     }
     
-    renderTable(sorted);
+    renderTable(processed);
   }
 
   sortSelect.addEventListener('change', (e) => {
